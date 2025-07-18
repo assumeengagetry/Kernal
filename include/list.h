@@ -1,4 +1,3 @@
-#ifndef __LIST_H__
 #define __LIST_H__
 
 #include "types.h"
@@ -464,10 +463,10 @@ static inline size_t list_count_nodes(struct list_head *head)
 {
     struct list_head *pos;
     size_t count = 0;
-    
+
     list_for_each(pos, head)
         count++;
-    
+
     return count;
 }
 
@@ -475,12 +474,12 @@ static inline size_t list_count_nodes(struct list_head *head)
 static inline bool list_contains(struct list_head *head, struct list_head *node)
 {
     struct list_head *pos;
-    
+
     list_for_each(pos, head) {
         if (pos == node)
             return true;
     }
-    
+
     return false;
 }
 
@@ -489,13 +488,13 @@ static inline struct list_head *list_get_nth(struct list_head *head, size_t n)
 {
     struct list_head *pos;
     size_t i = 0;
-    
+
     list_for_each(pos, head) {
         if (i == n)
             return pos;
         i++;
     }
-    
+
     return NULL;
 }
 
@@ -503,10 +502,8 @@ static inline struct list_head *list_get_nth(struct list_head *head, size_t n)
 static inline void list_reverse(struct list_head *head)
 {
     struct list_head *pos, *tmp;
-    
+
     list_for_each_safe(pos, tmp, head) {
         list_move(pos, head);
     }
 }
-
-#endif /* __LIST_H__ */

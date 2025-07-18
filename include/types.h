@@ -1,4 +1,3 @@
-#ifndef __TYPES_H__
 #define __TYPES_H__
 
 /* 基本类型定义 */
@@ -179,5 +178,3 @@ typedef enum {
 #define S_ISBLK(m)  (((m) & S_IFMT) == S_IFBLK)
 #define S_ISFIFO(m) (((m) & S_IFMT) == S_IFIFO)
 #define S_ISSOCK(m) (((m) & S_IFMT) == S_IFSOCK)
-
-#endif /* __TYPES_H__ */

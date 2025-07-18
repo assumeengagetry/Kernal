@@ -1,4 +1,3 @@
-#ifndef __CONFIG_H__
 #define __CONFIG_H__
 
 /* 内核配置选项 */
@@ -269,5 +268,3 @@
 #define MODULE_DESCRIPTION(x)   static const char __module_description[] = x
 #define MODULE_VERSION(x)       static const char __module_version[] = x
 #define MODULE_ALIAS(x)         static const char __module_alias[] = x
-
-#endif /* __CONFIG_H__ */

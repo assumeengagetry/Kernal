@@ -1,4 +1,3 @@
-#ifndef __MM_H__
 #define __MM_H__
 
 #include "types.h"
@@ -192,7 +191,7 @@ enum migratetype {
 /* 页面结构 */
 struct page {
     unsigned long flags;        /* 页面标志 */
-    
+
     union {
         struct {
             struct list_head lru;   /* LRU链表 */
@@ -200,24 +199,24 @@ struct page {
             pgoff_t index;          /* 页面索引 */
             void *private;          /* 私有数据 */
         };
-        
+
         struct {
             struct page *next;      /* 下一页 */
             int pages;              /* 页面数量 */
             int pobjects;           /* 部分对象数量 */
         };
-        
+
         struct {
             struct page *first_page; /* 复合页面首页 */
         };
-        
+
         struct {
             struct list_head list;  /* 通用链表 */
             void *s_mem;            /* slab内存 */
             struct slab *slab_page; /* slab页面 */
         };
     };
-    
+
     union {
         atomic_t _mapcount;         /* 映射计数 */
         struct {
@@ -226,7 +225,7 @@ struct page {
             unsigned frozen:1;      /* 冻结标志 */
         };
     };
-    
+
     union {
         atomic_t _refcount;         /* 引用计数 */
         unsigned int active;        /* 活跃对象数量 */
@@ -234,18 +233,18 @@ struct page {
             unsigned long counters;
         };
     };
-    
+
     struct mem_cgroup *mem_cgroup;  /* 内存控制组 */
-    
+
     /* 调试信息 */
     void *virtual;                  /* 虚拟地址 */
-    
+
     /* 锁和等待队列 */
     wait_queue_head_t *waiters;     /* 等待队列 */
-    
+
     /* 页面所属的内存区域 */
     struct zone *zone;              /* 内存区域 */
-    
+
     /* 页面所属的节点 */
     struct pglist_data *pgdat;      /* 节点数据 */
 };
@@ -280,31 +279,31 @@ struct vm_area_struct {
     struct mm_struct *vm_mm;        /* 所属的内存描述符 */
     unsigned long vm_start;         /* 起始虚拟地址 */
     unsigned long vm_end;           /* 结束虚拟地址 */
-    
+
     struct vm_area_struct *vm_next; /* 下一个VMA */
     struct vm_area_struct *vm_prev; /* 上一个VMA */
-    
+
     struct rb_node vm_rb;           /* 红黑树节点 */
-    
+
     unsigned long rb_subtree_last;  /* 子树最大结束地址 */
-    
+
     pgprot_t vm_page_prot;          /* 页面保护 */
     unsigned long vm_flags;         /* 标志 */
-    
+
     struct {
         struct rb_node rb;          /* 红黑树节点 */
         unsigned long rb_subtree_last;
     } shared;
-    
+
     struct list_head anon_vma_chain; /* 匿名VMA链 */
     struct anon_vma *anon_vma;      /* 匿名VMA */
-    
+
     const struct vm_operations_struct *vm_ops; /* 操作函数 */
-    
+
     unsigned long vm_pgoff;         /* 页面偏移 */
     struct file *vm_file;           /* 映射文件 */
     void *vm_private_data;          /* 私有数据 */
-    
+
     struct mempolicy *vm_policy;    /* NUMA策略 */
     struct vm_userfaultfd_ctx vm_userfaultfd_ctx; /* 用户故障上下文 */
 };
@@ -350,59 +349,59 @@ typedef struct {
 struct zone {
     unsigned long watermark[NR_WMARK]; /* 水位标记 */
     unsigned long nr_reserved_highatomic; /* 高原子保留页面数 */
-    
+
     long lowmem_reserve[MAX_NR_ZONES]; /* 低内存保留 */
-    
+
     struct per_cpu_pages per_cpu_pageset[NR_CPUS]; /* 每CPU页面集 */
-    
+
     spinlock_t lock;                /* 区域锁 */
-    
+
     /* 空闲页面统计 */
     unsigned long free_pages;       /* 空闲页面数 */
     unsigned long min_unmapped_pages; /* 最小未映射页面数 */
     unsigned long min_slab_pages;   /* 最小slab页面数 */
-    
+
     struct free_area free_area[MAX_ORDER]; /* 空闲区域 */
-    
+
     /* 区域回收 */
     unsigned long pages_scanned;    /* 扫描的页面数 */
     spinlock_t lru_lock;           /* LRU锁 */
     struct lruvec lruvec;          /* LRU向量 */
-    
+
     unsigned long compact_cached_free_pfn; /* 压缩缓存的空闲pfn */
     unsigned long compact_cached_migrate_pfn[2]; /* 压缩缓存的迁移pfn */
     unsigned long compact_init_migrate_pfn; /* 压缩初始迁移pfn */
     unsigned long compact_init_free_pfn; /* 压缩初始空闲pfn */
-    
+
     unsigned int compact_considered; /* 压缩考虑数 */
     unsigned int compact_defer_shift; /* 压缩延迟偏移 */
     int compact_order_failed;       /* 压缩顺序失败 */
-    
+
     bool contiguous;               /* 连续内存 */
-    
+
     /* 统计信息 */
     atomic_long_t vm_stat[NR_VM_ZONE_STAT_ITEMS]; /* 虚拟内存统计 */
     atomic_long_t vm_numa_stat[NR_VM_NUMA_STAT_ITEMS]; /* NUMA统计 */
-    
+
     /* 区域信息 */
     unsigned long zone_start_pfn;   /* 区域起始pfn */
     unsigned long managed_pages;    /* 管理的页面数 */
     unsigned long spanned_pages;    /* 跨越的页面数 */
     unsigned long present_pages;    /* 存在的页面数 */
-    
+
     const char *name;              /* 区域名称 */
-    
+
     /* 内存热插拔 */
     seqlock_t span_seqlock;        /* 跨越序列锁 */
-    
+
     /* 等待队列 */
     wait_queue_head_t *wait_table;  /* 等待表 */
     unsigned long wait_table_hash_nr_entries; /* 等待表哈希条目数 */
     unsigned long wait_table_bits;  /* 等待表位数 */
-    
+
     /* 页面回收 */
     struct pglist_data *zone_pgdat; /* 区域页面数据 */
-    
+
     /* 填充到缓存行边界 */
     char padding[ZONE_PADDING_SIZE];
 };
@@ -450,27 +449,27 @@ struct pglist_data {
     struct zone node_zones[MAX_NR_ZONES]; /* 节点区域 */
     struct zonelist node_zonelists[MAX_ZONELISTS]; /* 区域列表 */
     int nr_zones;                   /* 区域数量 */
-    
+
     struct page *node_mem_map;      /* 节点内存映射 */
-    
+
     unsigned long node_start_pfn;   /* 节点起始pfn */
     unsigned long node_present_pages; /* 节点存在页面数 */
     unsigned long node_spanned_pages; /* 节点跨越页面数 */
-    
+
     int node_id;                    /* 节点ID */
     wait_queue_head_t kswapd_wait;  /* kswapd等待队列 */
     wait_queue_head_t pfmemalloc_wait; /* pfmemalloc等待队列 */
     struct task_struct *kswapd;     /* kswapd任务 */
     int kswapd_order;              /* kswapd阶数 */
     enum zone_type kswapd_classzone_idx; /* kswapd类区域索引 */
-    
+
     int kswapd_failures;           /* kswapd失败次数 */
-    
+
     int kcompactd_max_order;       /* kcompactd最大阶数 */
     enum zone_type kcompactd_classzone_idx; /* kcompactd类区域索引 */
     wait_queue_head_t kcompactd_wait; /* kcompactd等待队列 */
     struct task_struct *kcompactd;  /* kcompactd任务 */
-    
+
     spinlock_t numabalancing_migrate_lock; /* NUMA平衡迁移锁 */
-    
+
     unsigned long totalreserve_pages

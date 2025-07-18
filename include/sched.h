@@ -1,4 +1,3 @@
-#ifndef __SCHED_H__
 #define __SCHED_H__
 
 #include "types.h"
@@ -73,16 +72,16 @@ struct mm_struct {
     struct rb_root mm_rb;           /* VMA红黑树 */
     u32 map_count;                  /* VMA数量 */
     spinlock_t page_table_lock;     /* 页表锁 */
-    
+
     /* 地址空间布局 */
     ulong mmap_base;                /* mmap区域起始地址 */
     ulong mmap_legacy_base;         /* 传统mmap基址 */
     ulong task_size;                /* 任务地址空间大小 */
     ulong highest_vm_end;           /* 最高虚拟地址 */
-    
+
     /* 页目录 */
     phys_addr_t pgd;                /* 页全局目录物理地址 */
-    
+
     /* 统计信息 */
     ulong total_vm;                 /* 总虚拟内存页数 */
     ulong locked_vm;                /* 锁定的虚拟内存页数 */
@@ -91,7 +90,7 @@ struct mm_struct {
     ulong exec_vm;                  /* 可执行的虚拟内存页数 */
     ulong stack_vm;                 /* 栈虚拟内存页数 */
     ulong data_vm;                  /* 数据段虚拟内存页数 */
-    
+
     /* 特殊地址 */
     ulong start_code, end_code;     /* 代码段边界 */
     ulong start_data, end_data;     /* 数据段边界 */
@@ -99,11 +98,11 @@ struct mm_struct {
     ulong start_stack;              /* 栈起始地址 */
     ulong arg_start, arg_end;       /* 参数区边界 */
     ulong env_start, env_end;       /* 环境变量区边界 */
-    
+
     /* 引用计数 */
     u32 mm_users;                   /* 使用此mm的进程数 */
     u32 mm_count;                   /* 引用计数 */
-    
+
     /* 核心转储支持 */
     u32 core_state;                 /* 核心转储状态 */
     spinlock_t ioctx_lock;          /* 异步I/O上下文锁 */
@@ -113,10 +112,10 @@ struct mm_struct {
 struct fs_struct {
     int users;                      /* 用户计数 */
     spinlock_t lock;                /* 保护锁 */
-    
+
     struct path root;               /* 根目录 */
     struct path pwd;                /* 当前工作目录 */
-    
+
     mode_t umask;                   /* 文件创建掩码 */
 };
 
@@ -124,11 +123,11 @@ struct fs_struct {
 struct files_struct {
     u32 count;                      /* 引用计数 */
     spinlock_t file_lock;           /* 文件锁 */
-    
+
     struct file **fdt;              /* 文件描述符表 */
     u32 max_fds;                    /* 最大文件描述符数 */
     u32 next_fd;                    /* 下一个可用fd */
-    
+
     struct file *fd_array[32];      /* 内置文件描述符数组 */
 };
 
@@ -136,21 +135,21 @@ struct files_struct {
 struct signal_struct {
     u32 count;                      /* 引用计数 */
     u32 live;                       /* 活跃线程数 */
-    
+
     /* 信号处理程序 */
     struct k_sigaction action[64];  /* 信号处理程序数组 */
     spinlock_t siglock;             /* 信号锁 */
-    
+
     /* 进程组和会话 */
     pid_t pgrp;                     /* 进程组ID */
     pid_t session;                  /* 会话ID */
-    
+
     /* 统计信息 */
     u64 utime;                      /* 用户态时间 */
     u64 stime;                      /* 内核态时间 */
     u64 cutime;                     /* 子进程用户态时间 */
     u64 cstime;                     /* 子进程内核态时间 */
-    
+
     /* 资源限制 */
     struct rlimit rlim[16];         /* 资源限制数组 */
 };
@@ -160,31 +159,31 @@ struct sched_entity {
     struct load_weight load;        /* 负载权重 */
     struct rb_node run_node;        /* 运行队列红黑树节点 */
     struct list_head group_node;    /* 组调度链表节点 */
-    
+
     u64 exec_start;                 /* 开始执行时间 */
     u64 sum_exec_runtime;           /* 累计执行时间 */
     u64 vruntime;                   /* 虚拟运行时间 */
     u64 prev_sum_exec_runtime;      /* 上次累计执行时间 */
-    
+
     u64 nr_migrations;              /* 迁移次数 */
-    
+
     /* 调度统计 */
     u64 start_runtime;              /* 开始运行时间 */
     u64 avg_overlap;                /* 平均重叠时间 */
     u64 avg_wakeup;                 /* 平均唤醒时间 */
     u64 avg_running;                /* 平均运行时间 */
-    
+
     s64 sum_sleep_runtime;          /* 累计睡眠时间 */
     s64 sum_block_runtime;          /* 累计阻塞时间 */
     s64 exec_max;                   /* 最大执行时间 */
     s64 slice_max;                  /* 最大时间片 */
-    
+
     u64 nr_migrations_cold;         /* 冷迁移次数 */
     u64 nr_failed_migrations_affine; /* 失败的亲和性迁移次数 */
     u64 nr_failed_migrations_running; /* 运行时失败的迁移次数 */
     u64 nr_failed_migrations_hot;   /* 热迁移失败次数 */
     u64 nr_forced_migrations;       /* 强制迁移次数 */
-    
+
     u64 nr_wakeups;                 /* 唤醒次数 */
     u64 nr_wakeups_sync;            /* 同步唤醒次数 */
     u64 nr_wakeups_migrate;         /* 迁移唤醒次数 */
@@ -228,17 +227,17 @@ struct task_struct {
     int exit_state;                 /* 退出状态 */
     int exit_code;                  /* 退出代码 */
     int exit_signal;                /* 退出信号 */
-    
+
     u32 flags;                      /* 进程标志 */
     u32 ptrace;                     /* ptrace标志 */
-    
+
     /* 进程标识 */
     pid_t pid;                      /* 进程ID */
     pid_t tgid;                     /* 线程组ID */
     pid_t ppid;                     /* 父进程ID */
     pid_t pgrp;                     /* 进程组ID */
     pid_t session;                  /* 会话ID */
-    
+
     /* 用户标识 */
     uid_t uid;                      /* 用户ID */
     gid_t gid;                      /* 组ID */
@@ -248,41 +247,41 @@ struct task_struct {
     gid_t sgid;                     /* 保存的组ID */
     uid_t fsuid;                    /* 文件系统用户ID */
     gid_t fsgid;                    /* 文件系统组ID */
-    
+
     /* 调度相关 */
     int prio;                       /* 动态优先级 */
     int static_prio;                /* 静态优先级 */
     int normal_prio;                /* 正常优先级 */
     struct sched_entity se;         /* 调度实体 */
     struct sched_rt_entity rt;      /* 实时调度实体 */
-    
+
     u32 policy;                     /* 调度策略 */
     u64 se_vruntime;               /* 虚拟运行时间 */
     u64 se_sum_exec_runtime;       /* 累计执行时间 */
-    
+
     /* CPU亲和性 */
     u64 cpus_allowed;               /* 允许的CPU掩码 */
     u32 nr_cpus_allowed;            /* 允许的CPU数量 */
-    
+
     /* 进程关系 */
     struct task_struct *real_parent; /* 真实父进程 */
     struct task_struct *parent;     /* 父进程 */
     struct list_head children;      /* 子进程链表 */
     struct list_head sibling;       /* 兄弟进程链表 */
     struct task_struct *group_leader; /* 线程组领导者 */
-    
+
     /* 链表节点 */
     struct list_head tasks;         /* 全局任务链表 */
     struct rb_node run_node;        /* 运行队列红黑树节点 */
-    
+
     /* 内存管理 */
     struct mm_struct *mm;           /* 内存描述符 */
     struct mm_struct *active_mm;    /* 活跃内存描述符 */
-    
+
     /* 文件系统 */
     struct fs_struct *fs;           /* 文件系统信息 */
     struct files_struct *files;     /* 文件描述符表 */
-    
+
     /* 信号处理 */
     struct signal_struct *signal;   /* 信号处理 */
     struct sighand_struct *sighand; /* 信号处理程序 */
@@ -290,63 +289,63 @@ struct task_struct {
     sigset_t real_blocked;          /* 真实被阻塞的信号 */
     sigset_t saved_sigmask;         /* 保存的信号掩码 */
     struct sigpending pending;      /* 待处理的信号 */
-    
+
     /* 执行上下文 */
     void *stack;                    /* 内核栈 */
     u64 stack_size;                 /* 栈大小 */
-    
+
     /* 寄存器状态 */
     struct pt_regs *regs;           /* 寄存器状态 */
-    
+
     /* 时间统计 */
     u64 utime;                      /* 用户态时间 */
     u64 stime;                      /* 内核态时间 */
     u64 gtime;                      /* 客户态时间 */
     u64 start_time;                 /* 开始时间 */
     u64 real_start_time;            /* 真实开始时间 */
-    
+
     /* 内存使用统计 */
     ulong min_flt;                  /* 次要页错误 */
     ulong maj_flt;                  /* 主要页错误 */
     ulong nvcsw;                    /* 主动上下文切换 */
     ulong nivcsw;                   /* 被动上下文切换 */
-    
+
     /* 进程名称 */
     char comm[16];                  /* 进程名称 */
-    
+
     /* 退出处理 */
     int exit_code;                  /* 退出代码 */
     int exit_signal;                /* 退出信号 */
-    
+
     /* 内核线程相关 */
     int (*thread_fn)(void *data);   /* 线程函数 */
     void *thread_data;              /* 线程数据 */
-    
+
     /* 等待队列 */
     wait_queue_head_t *wait_chldexit; /* 等待子进程退出 */
-    
+
     /* 命名空间 */
     struct nsproxy *nsproxy;        /* 命名空间代理 */
-    
+
     /* 审计 */
     u32 audit_context;              /* 审计上下文 */
-    
+
     /* 性能事件 */
     struct perf_event_context *perf_event_ctxp; /* 性能事件上下文 */
-    
+
     /* 组调度 */
     struct task_group *sched_task_group; /* 调度任务组 */
-    
+
     /* 控制组 */
     struct cgroup_subsys_state *cgroups; /* 控制组 */
-    
+
     /* 工作队列 */
     struct list_head ptraced;       /* 被跟踪的进程 */
     struct list_head ptrace_entry;  /* 跟踪条目 */
-    
+
     /* 锁 */
     spinlock_t alloc_lock;          /* 分配锁 */
-    
+
     /* 其他 */
     u32 personality;                /* 个性 */
     u32 did_exec:1;                 /* 已执行exec */
@@ -356,130 +355,130 @@ struct task_struct {
     u32 sched_reset_on_fork:1;      /* fork时重置调度 */
     u32 sched_contributes_to_load:1; /* 贡献到负载 */
     u32 sched_migrated:1;           /* 已迁移 */
-    
+
     /* 抢占计数 */
     u32 preempt_count;              /* 抢占计数 */
-    
+
     /* 待处理的工作 */
     struct restart_block restart_block; /* 重启块 */
-    
+
     /* 插件钩子 */
     void *security;                 /* 安全模块私有数据 */
-    
+
     /* 审计 */
     struct audit_context *audit_context; /* 审计上下文 */
-    
+
     /* 跟踪 */
     unsigned long trace;            /* 跟踪标志 */
     unsigned long trace_recursion;  /* 跟踪递归 */
-    
+
     /* RCU */
     struct rcu_head rcu;            /* RCU头 */
-    
+
     /* 延迟计数 */
     struct task_delay_info *delays; /* 延迟信息 */
-    
+
     /* 故障注入 */
     struct fault_attr *make_it_fail; /* 故障注入 */
-    
+
     /* 页错误处理 */
     int make_it_fail;               /* 使其失败 */
-    
+
     /* 目录通知 */
     struct list_head *scm_work_list; /* SCM工作列表 */
-    
+
     /* 栈金丝雀 */
     unsigned long stack_canary;     /* 栈金丝雀 */
-    
+
     /* 原子计数 */
     atomic_t usage;                 /* 使用计数 */
     atomic_t live;                  /* 活跃计数 */
-    
+
     /* 等待队列 */
     wait_queue_head_t wait_chldexit; /* 等待子进程退出 */
-    
+
     /* 通知链 */
     struct atomic_notifier_head *task_exit_notifier; /* 任务退出通知 */
-    
+
     /* 进程时间 */
     struct timespec start_time;     /* 开始时间 */
     struct timespec real_start_time; /* 真实开始时间 */
-    
+
     /* 调度统计 */
     struct sched_info sched_info;   /* 调度信息 */
-    
+
     /* 任务统计 */
     struct task_stats *stats;       /* 任务统计 */
-    
+
     /* 锁统计 */
     struct lock_class_key *lock_class_key; /* 锁类键 */
-    
+
     /* 内存策略 */
     struct mempolicy *mempolicy;    /* 内存策略 */
     short il_next;                  /* 下一个交错节点 */
     short pref_node_fork;           /* fork时的首选节点 */
-    
+
     /* 块I/O */
     struct bio_list *bio_list;      /* 生物列表 */
     struct blk_plug *plug;          /* 块插件 */
-    
+
     /* 互斥锁 */
     struct mutex_waiter *blocked_on; /* 阻塞在的互斥锁 */
-    
+
     /* 延迟 */
     struct task_delay_info *delays; /* 延迟信息 */
-    
+
     /* 跟踪 */
     struct tracer *tracer;          /* 跟踪器 */
-    
+
     /* 页面 */
     struct page_frag task_frag;     /* 任务片段 */
-    
+
     /* 接收队列 */
     struct sk_buff_head sk_receive_queue; /* 套接字接收队列 */
-    
+
     /* 发送队列 */
     struct sk_buff_head sk_write_queue; /* 套接字写队列 */
-    
+
     /* 错误队列 */
     struct sk_buff_head sk_error_queue; /* 套接字错误队列 */
-    
+
     /* 套接字 */
     struct socket *socket;          /* 套接字 */
-    
+
     /* 网络命名空间 */
     struct net *net_ns;             /* 网络命名空间 */
-    
+
     /* 最后使用的CPU */
     int last_cpu;                   /* 最后使用的CPU */
-    
+
     /* 唤醒CPU */
     int wake_cpu;                   /* 唤醒CPU */
-    
+
     /* 迁移禁用 */
     int migrate_disable;            /* 迁移禁用 */
-    
+
     /* RCU读取锁计数 */
     int rcu_read_lock_nesting;      /* RCU读取锁嵌套 */
-    
+
     /* RCU读取解锁特殊 */
     char rcu_read_unlock_special;   /* RCU读取解锁特殊 */
-    
+
     /* RCU节点 */
     struct rcu_node *rcu_blocked_node; /* RCU阻塞节点 */
-    
+
     /* RCU任务 */
     struct list_head rcu_tasks_holdout_list; /* RCU任务持有列表 */
-    
+
     /* RCU任务持有 */
     int rcu_tasks_holdout;          /* RCU任务持有 */
-    
+
     /* RCU任务空闲CPU */
     int rcu_tasks_idle_cpu;         /* RCU任务空闲CPU */
-    
+
     /* 原子使用计数 */
     atomic_t usage;                 /* 使用计数 */
-    
+
     /* 引用计数 */
     struct kref kref;               /* 内核引用 */
 };
@@ -490,7 +489,7 @@ struct sched_rt_entity {
     unsigned long timeout;          /* 超时 */
     unsigned long watchdog_stamp;   /* 看门狗时间戳 */
     unsigned int time_slice;        /* 时间片 */
-    
+
     struct sched_rt_entity *back;   /* 后向指针 */
     struct sched_rt_entity *parent; /* 父指针 */
     struct rt_rq *rt_rq;            /* 实时运行队列 */
@@ -701,101 +700,101 @@ struct rq {
     unsigned int nr_running;        /* 运行任务数 */
     unsigned int nr_numa_running;   /* NUMA运行任务数 */
     unsigned int nr_preferred_running; /* 首选运行任务数 */
-    
+
     struct load_weight load;        /* 负载权重 */
     unsigned long nr_load_updates;  /* 负载更新次数 */
     u64 nr_switches;               /* 切换次数 */
-    
+
     struct cfs_rq cfs;             /* CFS运行队列 */
     struct rt_rq rt;               /* RT运行队列 */
     struct dl_rq dl;               /* DL运行队列 */
-    
+
     struct task_struct *curr;       /* 当前任务 */
     struct task_struct *idle;       /* 空闲任务 */
     struct task_struct *stop;       /* 停止任务 */
-    
+
     unsigned long next_balance;     /* 下次负载均衡时间 */
     struct mm_struct *prev_mm;      /* 上一个内存描述符 */
-    
+
     u64 clock;                     /* 时钟 */
     u64 clock_task;                /* 任务时钟 */
-    
+
     atomic_t nr_iowait;            /* I/O等待数 */
-    
+
     struct root_domain *rd;         /* 根域 */
     struct sched_domain *sd;        /* 调度域 */
-    
+
     unsigned long cpu_capacity;     /* CPU容量 */
     unsigned long cpu_capacity_orig; /* 原始CPU容量 */
-    
+
     struct callback_head *balance_callback; /* 负载均衡回调 */
-    
+
     unsigned char idle_balance;     /* 空闲负载均衡 */
-    
+
     int post_schedule;             /* 后调度 */
-    
+
     int active_balance;            /* 主动负载均衡 */
     int push_cpu;                  /* 推送CPU */
     struct cpu_stop_work active_balance_work; /* 主动负载均衡工作 */
-    
+
     int cpu;                       /* CPU编号 */
     int online;                    /* 在线状态 */
-    
+
     struct list_head cfs_tasks;    /* CFS任务列表 */
-    
+
     u64 rt_avg;                    /* RT平均值 */
     u64 age_stamp;                 /* 年龄戳 */
     u64 idle_stamp;                /* 空闲戳 */
     u64 avg_idle;                  /* 平均空闲时间 */
-    
+
     u64 prev_irq_time;             /* 上一次中断时间 */
     u64 prev_steal_time;           /* 上一次被偷时间 */
     u64 prev_steal_time_rq;        /* 上一次被偷时间(运行队列) */
-    
+
     int lru_count;                 /* LRU计数 */
     struct call_single_data nohz_csd; /* NOHZ单调用数据 */
     unsigned int nohz_tick_stopped; /* NOHZ时钟停止 */
     atomic_t nohz_flags;           /* NOHZ标志 */
-    
+
     unsigned long last_load_update_tick; /* 最后负载更新时钟 */
     unsigned long last_blocked_load_update_tick; /* 最后阻塞负载更新时钟 */
     unsigned int has_blocked_load;  /* 有阻塞负载 */
-    
+
     u64 nohz_stamp;                /* NOHZ时间戳 */
     unsigned long nohz_flags;       /* NOHZ标志 */
-    
+
     unsigned long max_idle_balance_cost; /* 最大空闲负载均衡成本 */
-    
+
     struct sched_avg avg_rt;        /* RT平均值 */
     struct sched_avg avg_dl;        /* DL平均值 */
     struct sched_avg avg_irq;       /* 中断平均值 */
-    
+
     u64 idle_stamp;                /* 空闲戳 */
     u64 avg_idle;                  /* 平均空闲时间 */
-    
+
     unsigned long wake_stamp;       /* 唤醒戳 */
     u64 wake_avg_idle;             /* 唤醒平均空闲时间 */
-    
+
     int balance_cpu;               /* 负载均衡CPU */
-    
+
     struct cpu_stop_work balance_work; /* 负载均衡工作 */
-    
+
     struct rq_flags rf;            /* 运行队列标志 */
-    
+
     unsigned int yf_flags;         /* YF标志 */
-    
+
     u64 clock_skip_update;         /* 时钟跳过更新 */
-    
+
     struct sched_avg avg_thermal;   /* 热平均值 */
-    
+
     struct cpu_capacity_info capacity_info; /* CPU容量信息 */
-    
+
     struct rq_flags rf;            /* 运行队列标志 */
-    
+
     unsigned int ttwu_count;       /* 尝试唤醒计数 */
     unsigned int ttwu_local;       /* 本地唤醒计数 */
-    
+
     struct hrtimer hrtick_timer;   /* 高分辨率时钟定时器 */
     ktime_t hrtick_time;           /* 高分辨率时钟时间 */
-    
+
     struct sched_info rq_s

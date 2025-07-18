@@ -1,4 +1,3 @@
-#ifndef __SPINLOCK_H__
 #define __SPINLOCK_H__
 
 #include "types.h"
@@ -69,17 +68,17 @@ static inline void spin_lock_init(spinlock_t *lock)
 static inline void spin_lock(spinlock_t *lock)
 {
     u32 cpu = smp_processor_id();
-    
+
     /* 检查魔数 */
     if (lock->magic != SPINLOCK_MAGIC) {
         panic("Bad spinlock magic: %p\n", lock);
     }
-    
+
     /* 检查递归锁定 */
     if (lock->owner_cpu == cpu) {
         panic("Recursive spinlock: %s on CPU %d\n", lock->name, cpu);
     }
-    
+
     /* 自旋等待锁 */
     while (1) {
         /* 尝试获取锁 */
@@ -89,7 +88,7 @@ static inline void spin_lock(spinlock_t *lock)
             lock->owner = __builtin_return_address(0);
             break;
         }
-        
+
         /* 自旋等待 */
         while (lock->lock == SPINLOCK_LOCKED) {
             cpu_relax();
@@ -101,24 +100,24 @@ static inline void spin_lock(spinlock_t *lock)
 static inline int spin_trylock(spinlock_t *lock)
 {
     u32 cpu = smp_processor_id();
-    
+
     /* 检查魔数 */
     if (lock->magic != SPINLOCK_MAGIC) {
         panic("Bad spinlock magic: %p\n", lock);
     }
-    
+
     /* 检查递归锁定 */
     if (lock->owner_cpu == cpu) {
         panic("Recursive spinlock: %s on CPU %d\n", lock->name, cpu);
     }
-    
+
     /* 尝试获取锁 */
     if (__sync_bool_compare_and_swap(&lock->lock, SPINLOCK_UNLOCKED, SPINLOCK_LOCKED)) {
         lock->owner_cpu = cpu;
         lock->owner = __builtin_return_address(0);
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -126,22 +125,22 @@ static inline int spin_trylock(spinlock_t *lock)
 static inline void spin_unlock(spinlock_t *lock)
 {
     u32 cpu = smp_processor_id();
-    
+
     /* 检查魔数 */
     if (lock->magic != SPINLOCK_MAGIC) {
         panic("Bad spinlock magic: %p\n", lock);
     }
-    
+
     /* 检查锁的所有者 */
     if (lock->owner_cpu != cpu) {
         panic("Spinlock not owned by current CPU: %s, owner=%d, current=%d\n",
               lock->name, lock->owner_cpu, cpu);
     }
-    
+
     /* 清除所有者信息 */
     lock->owner_cpu = 0xFFFFFFFF;
     lock->owner = NULL;
-    
+
     /* 释放锁 */
     wmb();  /* 写内存屏障 */
     lock->lock = SPINLOCK_UNLOCKED;
@@ -220,13 +219,13 @@ static inline void read_lock(rwlock_t *lock)
     if (lock->magic != RWLOCK_MAGIC) {
         panic("Bad rwlock magic: %p\n", lock);
     }
-    
+
     while (1) {
         /* 等待写者完成 */
         while (lock->writer_waiting || (lock->lock & RWLOCK_WRITE_BIAS)) {
             cpu_relax();
         }
-        
+
         /* 尝试增加读者计数 */
         if (__sync_add_and_fetch(&lock->reader_count, 1)) {
             /* 再次检查是否有写者 */
@@ -248,7 +247,7 @@ static inline void read_unlock(rwlock_t *lock)
     if (lock->magic != RWLOCK_MAGIC) {
         panic("Bad rwlock magic: %p\n", lock);
     }
-    
+
     /* 减少读者计数 */
     __sync_sub_and_fetch(&lock->reader_count, 1);
 }
@@ -260,10 +259,10 @@ static inline void write_lock(rwlock_t *lock)
     if (lock->magic != RWLOCK_MAGIC) {
         panic("Bad rwlock magic: %p\n", lock);
     }
-    
+
     /* 标记有写者等待 */
     __sync_add_and_fetch(&lock->writer_waiting, 1);
-    
+
     while (1) {
         /* 尝试获取写锁 */
         if (__sync_bool_compare_and_swap(&lock->lock, 0, RWLOCK_WRITE_BIAS)) {
@@ -274,10 +273,10 @@ static inline void write_lock(rwlock_t *lock)
             /* 成功获取写锁 */
             break;
         }
-        
+
         cpu_relax();
     }
-    
+
     /* 清除写者等待标志 */
     __sync_sub_and_fetch(&lock->writer_waiting, 1);
 }
@@ -289,7 +288,7 @@ static inline void write_unlock(rwlock_t *lock)
     if (lock->magic != RWLOCK_MAGIC) {
         panic("Bad rwlock magic: %p\n", lock);
     }
-    
+
     /* 释放写锁 */
     wmb();  /* 写内存屏障 */
     lock->lock = 0;
@@ -302,12 +301,12 @@ static inline int read_trylock(rwlock_t *lock)
     if (lock->magic != RWLOCK_MAGIC) {
         panic("Bad rwlock magic: %p\n", lock);
     }
-    
+
     /* 如果有写者等待，直接返回失败 */
     if (lock->writer_waiting || (lock->lock & RWLOCK_WRITE_BIAS)) {
         return 0;
     }
-    
+
     /* 尝试增加读者计数 */
     if (__sync_add_and_fetch(&lock->reader_count, 1)) {
         /* 再次检查是否有写者 */
@@ -319,7 +318,7 @@ static inline int read_trylock(rwlock_t *lock)
         /* 成功获取读锁 */
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -330,7 +329,7 @@ static inline int write_trylock(rwlock_t *lock)
     if (lock->magic != RWLOCK_MAGIC) {
         panic("Bad rwlock magic: %p\n", lock);
     }
-    
+
     /* 尝试获取写锁 */
     if (__sync_bool_compare_and_swap(&lock->lock, 0, RWLOCK_WRITE_BIAS)) {
         /* 检查是否有读者 */
@@ -342,7 +341,7 @@ static inline int write_trylock(rwlock_t *lock)
         /* 成功获取写锁 */
         return 1;
     }
-    
+
     return 0;
 }
 
@@ -478,5 +477,3 @@ extern void lock_acquired(struct lockdep_map *lock, unsigned long ip);
 #define lock_contended(lock, ip) do { } while (0)
 #define lock_acquired(lock, ip) do { } while (0)
 #endif
-
-#endif /* __SPINLOCK_H__ */
