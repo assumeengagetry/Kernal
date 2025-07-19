@@ -140,7 +140,7 @@
 
 
 
-  
+
 #define CONFIG_MODULES    1
 #define CONFIG_MODULE_UBLOAD  1
 #define CONFIG_MODULE_FORCE_UNLOAD  0
@@ -202,7 +202,7 @@
 
 
 
-#define NSIG      64  
+#define NSIG      64
 #define SIGRTMIN    32
 #define SIGRTMAX    63
 

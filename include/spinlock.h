@@ -161,14 +161,14 @@ static inline void spin_assert_locked(spinlock_t *lock)
 }
 
 /* 禁用中断并获取自旋锁 */
-static inline void spin_lock_irqsave(spinlock_t *lock, unsigned long *flags)
+static inline void spin_lock_irqsave(spinlock_t *lock, ulong *flags)
 {
     *flags = local_irq_save();
     spin_lock(lock);
 }
 
 /* 释放自旋锁并恢复中断 */
-static inline void spin_unlock_irqrestore(spinlock_t *lock, unsigned long flags)
+static inline void spin_unlock_irqrestore(spinlock_t *lock, ulong flags)
 {
     spin_unlock(lock);
     local_irq_restore(flags);
@@ -346,28 +346,28 @@ static inline int write_trylock(rwlock_t *lock)
 }
 
 /* 禁用中断并获取读锁 */
-static inline void read_lock_irqsave(rwlock_t *lock, unsigned long *flags)
+static inline void read_lock_irqsave(rwlock_t *lock, ulong *flags)
 {
     *flags = local_irq_save();
     read_lock(lock);
 }
 
 /* 释放读锁并恢复中断 */
-static inline void read_unlock_irqrestore(rwlock_t *lock, unsigned long flags)
+static inline void read_unlock_irqrestore(rwlock_t *lock, ulong flags)
 {
     read_unlock(lock);
     local_irq_restore(flags);
 }
 
 /* 禁用中断并获取写锁 */
-static inline void write_lock_irqsave(rwlock_t *lock, unsigned long *flags)
+static inline void write_lock_irqsave(rwlock_t *lock, ulong *flags)
 {
     *flags = local_irq_save();
     write_lock(lock);
 }
 
 /* 释放写锁并恢复中断 */
-static inline void write_unlock_irqrestore(rwlock_t *lock, unsigned long flags)
+static inline void write_unlock_irqrestore(rwlock_t *lock, ulong flags)
 {
     write_unlock(lock);
     local_irq_restore(flags);
@@ -434,8 +434,8 @@ extern u32 smp_processor_id(void);
 extern void cpu_relax(void);
 
 /* 中断控制函数声明 */
-extern unsigned long local_irq_save(void);
-extern void local_irq_restore(unsigned long flags);
+extern ulong local_irq_save(void);
+extern void local_irq_restore(ulong flags);
 extern void local_irq_disable(void);
 extern void local_irq_enable(void);
 
@@ -461,9 +461,9 @@ enum {
 #ifdef CONFIG_LOCKDEP
 extern void lock_acquire(struct lockdep_map *lock, unsigned int subclass,
                         int trylock, int read, int check,
-                        struct lockdep_map *nest_lock, unsigned long ip);
+                        struct lockdep_map *nest_lock, ulong ip);
 extern void lock_release(struct lockdep_map *lock, int nested,
-                        unsigned long ip);
+                        ulong ip);
 #else
 #define lock_acquire(lock, subclass, trylock, read, check, nest_lock, ip) do { } while (0)
 #define lock_release(lock, nested, ip) do { } while (0)
@@ -471,8 +471,8 @@ extern void lock_release(struct lockdep_map *lock, int nested,
 
 /* 锁统计 */
 #ifdef CONFIG_LOCK_STAT
-extern void lock_contended(struct lockdep_map *lock, unsigned long ip);
-extern void lock_acquired(struct lockdep_map *lock, unsigned long ip);
+extern void lock_contended(struct lockdep_map *lock, ulong ip);
+extern void lock_acquired(struct lockdep_map *lock, ulong ip);
 #else
 #define lock_contended(lock, ip) do { } while (0)
 #define lock_acquired(lock, ip) do { } while (0)

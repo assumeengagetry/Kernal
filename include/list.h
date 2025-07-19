@@ -207,7 +207,7 @@ static inline void list_splice(const struct list_head *list, struct list_head *h
   if(!list_empty(list)){
     __list_splice(list, head, head->next);
   }
-  
+
   /* data */
 };
 
@@ -309,9 +309,9 @@ static inline void __hlist_del(struct hlist_node *n){
   if(next){
     next->pprev = pprev;
   }
-  
+
 }
-  
+
 
 static inline void hlist_del(struct hlist_node *n)
 {
@@ -323,7 +323,7 @@ static inline void hlist_del(struct hlist_node *n)
 }
 
 static inline void hlist_del_init(struct hlist_node *n)
-{  
+{
   if(!hlist_unhashed(n)){
     __hlist_del(n);
     INIT_HLIST_NODE(n);
@@ -384,7 +384,7 @@ static inline void hlist_add_fake(struct hlist_node *n){
 
 
 #define hlist_for_each_entry_continue(pos, head, member) \
-  for (pos = hlist_entry(pos->member.next, typeof(*pos), member); \  
+  for (pos = hlist_entry(pos->member.next, typeof(*pos), member); \
     pos; \
     &pos->member != (head); \
     pos = hlist_entry((pos)->member.next, typeof(*(pos)), member))
@@ -431,5 +431,5 @@ static inline void list_reverse(struct list_head *head) {
   list_for_each(pos, temp, head){
     list_move(pos,head);
   }
-  
+
 }

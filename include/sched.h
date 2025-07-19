@@ -112,7 +112,7 @@ struct mm_struct{
 
     u32 core_state;
     spinlock_t ioctx_lock;
-    
+
 };
 
 
@@ -254,7 +254,7 @@ struct task_struct{
     int normal_prio;
     struct sched_entity se;
     struct sched_rt_entity rt;
-    
+
 
 
     u32 policy;
@@ -315,7 +315,7 @@ struct task_struct{
 
 
     char comm[16];
-    
+
 
     int exit_code;
     int exit_signal;       ;
@@ -323,7 +323,7 @@ struct task_struct{
 
     int (*thread_fn)(void *data);
     void *thread_data;
-    
+
 
     wait_queue_head_t *wait_child_exit;
 
@@ -415,10 +415,10 @@ struct task_struct{
 
 
     struct mutex_waiter *blocked_on;
-    
+
 
     struct task_delay_info *delays;
-    
+
     struct tracer *tracer;
 
 
@@ -518,7 +518,7 @@ struct pt_regs{
     ulong rax;
     ulong rbx;
     ulong rcx;
-    ulong rdx;      
+    ulong rdx;
     ulong rsi;
     ulong rdi;
     ulong rbp;
@@ -533,13 +533,13 @@ struct pt_regs{
     ulong err;
     ulong trapno;
     ulong cr2;
-    ulong sp;   
+    ulong sp;
     ulong rsp;
     ulong fs_base;
     ulong gs_base;
     ulong ds_base;
     ulong es_base;
-    ulong ss_base;  
+    ulong ss_base;
 
 
 
@@ -549,11 +549,11 @@ struct pt_regs{
 struct restart_block {
     int (*fn)(struct pt_regs *);
     struct pt_regs *regs;
-    unsigned long args[6];
-    unsigned long error;
-    unsigned long saved_rip;
-    unsigned long saved_rsp;
-    unsigned long saved_rflags;
+    ulong args[6];
+    ulong error;
+    ulong saved_rip;
+    ulong saved_rsp;
+    ulong saved_rflags;
 };
 
 
@@ -651,7 +651,7 @@ extern void resched_curr(struct rq *rq);
 extern void resched_cpu(int cpu);
 extern int can_migrate_task(struct task_struct *p, struct lb_env *env);
 extern struct task_struct *load_balance(struct rq *this_rq, int idle,
-                                       struct rq *busiest, unsigned long *nr_moved);
+                                       struct rq *busiest, ulong *nr_moved);
 
 /* 任务创建和销毁 */
 extern struct task_struct *alloc_task_struct(void);
@@ -682,7 +682,7 @@ struct rq {
     unsigned int nr_preferred_running; /* 首选运行任务数 */
 
     struct load_weight load;        /* 负载权重 */
-    unsigned long nr_load_updates;  /* 负载更新次数 */
+    ulong nr_load_updates;  /* 负载更新次数 */
     u64 nr_switches;               /* 切换次数 */
 
     struct cfs_rq cfs;             /* CFS运行队列 */
@@ -693,7 +693,7 @@ struct rq {
     struct task_struct *idle;       /* 空闲任务 */
     struct task_struct *stop;       /* 停止任务 */
 
-    unsigned long next_balance;     /* 下次负载均衡时间 */
+    ulong next_balance;     /* 下次负载均衡时间 */
     struct mm_struct *prev_mm;      /* 上一个内存描述符 */
 
     u64 clock;                     /* 时钟 */
@@ -704,8 +704,8 @@ struct rq {
     struct root_domain *rd;         /* 根域 */
     struct sched_domain *sd;        /* 调度域 */
 
-    unsigned long cpu_capacity;     /* CPU容量 */
-    unsigned long cpu_capacity_orig; /* 原始CPU容量 */
+    ulong cpu_capacity;     /* CPU容量 */
+    ulong cpu_capacity_orig; /* 原始CPU容量 */
 
     struct callback_head *balance_callback; /* 负载均衡回调 */
 
@@ -736,14 +736,14 @@ struct rq {
     unsigned int nohz_tick_stopped; /* NOHZ时钟停止 */
     atomic_t nohz_flags;           /* NOHZ标志 */
 
-    unsigned long last_load_update_tick; /* 最后负载更新时钟 */
-    unsigned long last_blocked_load_update_tick; /* 最后阻塞负载更新时钟 */
+    ulong last_load_update_tick; /* 最后负载更新时钟 */
+    ulong last_blocked_load_update_tick; /* 最后阻塞负载更新时钟 */
     unsigned int has_blocked_load;  /* 有阻塞负载 */
 
     u64 nohz_stamp;                /* NOHZ时间戳 */
-    unsigned long nohz_flags;       /* NOHZ标志 */
+    ulong nohz_flags;       /* NOHZ标志 */
 
-    unsigned long max_idle_balance_cost; /* 最大空闲负载均衡成本 */
+    ulong max_idle_balance_cost; /* 最大空闲负载均衡成本 */
 
     struct sched_avg avg_rt;        /* RT平均值 */
     struct sched_avg avg_dl;        /* DL平均值 */
@@ -752,7 +752,7 @@ struct rq {
     u64 idle_stamp;                /* 空闲戳 */
     u64 avg_idle;                  /* 平均空闲时间 */
 
-    unsigned long wake_stamp;       /* 唤醒戳 */
+    ulong wake_stamp;       /* 唤醒戳 */
     u64 wake_avg_idle;             /* 唤醒平均空闲时间 */
 
     int balance_cpu;               /* 负载均衡CPU */

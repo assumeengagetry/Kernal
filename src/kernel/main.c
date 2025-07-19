@@ -4,20 +4,16 @@
 #include "../../include/list.h"
 #include "../../include/spinlock.h"
 
-/* 内核版本信息 */
 #define KERNEL_VERSION "0.1.0"
 #define KERNEL_NAME "MicroKernel"
 
-/* 全局变量 */
 static bool kernel_initialized = false;
 static struct task_struct *init_task = NULL;
 static struct mm_struct *init_mm = NULL;
 
-/* 系统调用表 */
 typedef long (*syscall_fn_t)(unsigned long, unsigned long, unsigned long,
                              unsigned long, unsigned long, unsigned long);
 
-/* 系统调用号定义 */
 #define __NR_read       0
 #define __NR_write      1
 #define __NR_open       2
@@ -122,7 +118,6 @@ typedef long (*syscall_fn_t)(unsigned long, unsigned long, unsigned long,
 
 #define NR_syscalls     101
 
-/* 系统调用函数声明 */
 extern long sys_read(unsigned int fd, char __user *buf, size_t count);
 extern long sys_write(unsigned int fd, const char __user *buf, size_t count);
 extern long sys_open(const char __user *filename, int flags, umode_t mode);
@@ -170,49 +165,39 @@ static const syscall_fn_t sys_call_table[NR_syscalls] = {
     [__NR_uname]        = (syscall_fn_t)sys_uname,
 };
 
-/* 内核printk函数 */
 int printk(const char *fmt, ...)
 {
     va_list args;
     char buffer[1024];
     int len;
-    
+
     va_start(args, fmt);
     len = vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
-    
-    /* 这里应该输出到串口或其他调试设备 */
-    /* 简化实现，实际需要底层驱动支持 */
+
     console_write(buffer, len);
-    
+
     return len;
 }
 
 /* 控制台写入函数 */
 void console_write(const char *buffer, size_t len)
 {
-    /* 简化实现，直接输出到串口 */
     for (size_t i = 0; i < len; i++) {
         serial_putc(buffer[i]);
     }
 }
 
-/* 串口输出字符 */
 void serial_putc(char c)
 {
-    /* 简化实现，使用x86串口端口 */
     #define SERIAL_PORT 0x3F8
-    
-    /* 等待串口就绪 */
+
     while (!(inb(SERIAL_PORT + 5) & 0x20)) {
-        /* 忙等待 */
     }
-    
-    /* 输出字符 */
+
     outb(SERIAL_PORT, c);
 }
 
-/* 端口输入/输出函数 */
 static inline unsigned char inb(unsigned short port)
 {
     unsigned char result;
@@ -225,60 +210,51 @@ static inline void outb(unsigned short port, unsigned char value)
     asm volatile("outb %0, %1" : : "a"(value), "Nd"(port));
 }
 
-/* 恐慌函数 */
 void panic(const char *fmt, ...)
 {
     va_list args;
     char buffer[1024];
-    
+
     va_start(args, fmt);
     vsnprintf(buffer, sizeof(buffer), fmt, args);
     va_end(args);
-    
+
     printk("KERNEL PANIC: %s\n", buffer);
-    
-    /* 禁用中断 */
+
     local_irq_disable();
-    
-    /* 停止所有CPU */
+
     for (;;) {
         halt();
     }
 }
 
-/* 停机函数 */
 static inline void halt(void)
 {
     asm volatile("hlt");
 }
 
-/* 创建初始进程 */
 static struct task_struct *create_init_process(void)
 {
     struct task_struct *task;
     struct mm_struct *mm;
-    
-    /* 分配任务结构 */
+
     task = alloc_task_struct();
     if (!task) {
         panic("Cannot allocate init task");
     }
-    
-    /* 分配内存描述符 */
+
     mm = mm_alloc();
     if (!mm) {
         free_task_struct(task);
         panic("Cannot allocate init mm");
     }
-    
-    /* 初始化任务 */
+
     task->pid = 1;
     task->tgid = 1;
     task->ppid = 0;
     task->pgrp = 1;
     task->session = 1;
-    
-    /* 设置用户标识 */
+
     task->uid = 0;
     task->gid = 0;
     task->euid = 0;
@@ -287,102 +263,68 @@ static struct task_struct *create_init_process(void)
     task->sgid = 0;
     task->fsuid = 0;
     task->fsgid = 0;
-    
-    /* 设置进程名称 */
+
     strcpy(task->comm, "init");
-    
-    /* 设置内存管理 */
+
     task->mm = mm;
     task->active_mm = mm;
-    
-    /* 设置调度相关 */
+
     task->state = TASK_RUNNING;
     task->prio = DEFAULT_PRIO;
     task->static_prio = DEFAULT_PRIO;
     task->normal_prio = DEFAULT_PRIO;
     task->policy = SCHED_NORMAL;
-    
-    /* 设置CPU亲和性 */
+
     task->cpus_allowed = (1UL << NR_CPUS) - 1;
     task->nr_cpus_allowed = NR_CPUS;
-    
-    /* 设置进程关系 */
+
     task->real_parent = task;
     task->parent = task;
     task->group_leader = task;
-    
-    /* 初始化时间统计 */
+
     task->start_time = get_jiffies_64();
     task->real_start_time = task->start_time;
-    
-    /* 添加到调度器 */
+
     sched_fork(task);
-    
+
     return task;
 }
 
-/* 初始化内核 */
 static void kernel_init(void)
 {
     printk("Initializing %s %s\n", KERNEL_NAME, KERNEL_VERSION);
-    
-    /* 初始化内存管理 */
-    printk("Initializing memory management...\n");
+
     mm_init();
     buddy_init();
-    
-    /* 初始化调度器 */
-    printk("Initializing scheduler...\n");
+
     sched_init();
-    
-    /* 初始化进程间通信 */
-    printk("Initializing IPC...\n");
+
     ipc_init();
-    
-    /* 初始化虚拟文件系统 */
-    printk("Initializing VFS...\n");
+
     vfs_init();
-    
-    /* 初始化网络协议栈 */
-    printk("Initializing network stack...\n");
+
     net_init();
-    
-    /* 初始化设备驱动 */
-    printk("Initializing device drivers...\n");
+
     driver_init();
-    
-    /* 创建初始进程 */
-    printk("Creating init process...\n");
+
     init_task = create_init_process();
-    if (!init_task) {
-        panic("Cannot create init process");
-    }
-    
-    /* 设置当前进程 */
+
     set_current(init_task);
-    
-    /* 唤醒初始进程 */
+
     wake_up_new_task(init_task);
-    
+
     kernel_initialized = true;
-    printk("Kernel initialization complete\n");
 }
 
-/* 内核主函数 */
 void kernel_main(void)
 {
-    /* 初始化内核 */
     kernel_init();
-    
-    /* 开始调度 */
-    printk("Starting scheduler...\n");
+
     schedule();
-    
-    /* 永远不应该到达这里 */
-    panic("Scheduler returned!");
+
+    panic("OOOOOOOO!!!!!! shit");
 }
 
-/* 系统调用处理函数 */
 long do_syscall(unsigned long syscall_nr, unsigned long arg0,
                 unsigned long arg1, unsigned long arg2,
                 unsigned long arg3, unsigned long arg4,
@@ -390,27 +332,23 @@ long do_syscall(unsigned long syscall_nr, unsigned long arg0,
 {
     syscall_fn_t syscall_fn;
     long result;
-    
-    /* 检查系统调用号 */
+
     if (syscall_nr >= NR_syscalls) {
         printk("Invalid syscall number: %lu\n", syscall_nr);
         return -ENOSYS;
     }
-    
-    /* 获取系统调用函数 */
+
     syscall_fn = sys_call_table[syscall_nr];
     if (!syscall_fn) {
         printk("Unimplemented syscall: %lu\n", syscall_nr);
         return -ENOSYS;
     }
-    
-    /* 调用系统调用 */
+
     result = syscall_fn(arg0, arg1, arg2, arg3, arg4, arg5);
-    
+
     return result;
 }
 
-/* 基本系统调用实现 */
 long sys_getpid(void)
 {
     return current->pid;
@@ -425,7 +363,6 @@ long sys_sched_yield(void)
 long sys_exit(int error_code)
 {
     do_exit(error_code);
-    /* 永远不会返回 */
     return 0;
 }
 
@@ -476,55 +413,50 @@ long sys_munmap(unsigned long addr, size_t len)
 long sys_sysinfo(struct sysinfo __user *info)
 {
     struct sysinfo val;
-    
+
     si_meminfo(&val);
     si_swapinfo(&val);
-    
+
     if (copy_to_user(info, &val, sizeof(struct sysinfo)))
         return -EFAULT;
-    
+
     return 0;
 }
 
 long sys_uname(struct utsname __user *name)
 {
     struct utsname kernel_info;
-    
+
     strcpy(kernel_info.sysname, "MicroKernel");
     strcpy(kernel_info.nodename, "localhost");
     strcpy(kernel_info.release, KERNEL_VERSION);
     strcpy(kernel_info.version, "1");
     strcpy(kernel_info.machine, "x86_64");
     strcpy(kernel_info.domainname, "localdomain");
-    
+
     if (copy_to_user(name, &kernel_info, sizeof(struct utsname)))
         return -EFAULT;
-    
+
     return 0;
 }
 
-/* 空的系统调用实现 */
 long sys_read(unsigned int fd, char __user *buf, size_t count)
 {
-    /* TODO: 实现文件读取 */
     return -ENOSYS;
 }
 
 long sys_write(unsigned int fd, const char __user *buf, size_t count)
 {
-    /* TODO: 实现文件写入 */
     return -ENOSYS;
 }
 
 long sys_open(const char __user *filename, int flags, umode_t mode)
 {
-    /* TODO: 实现文件打开 */
     return -ENOSYS;
 }
 
 long sys_close(unsigned int fd)
 {
-    /* TODO: 实现文件关闭 */
     return -ENOSYS;
 }
 
@@ -532,22 +464,18 @@ long sys_execve(const char __user *filename,
                 const char __user *const __user *argv,
                 const char __user *const __user *envp)
 {
-    /* TODO: 实现程序执行 */
     return -ENOSYS;
 }
 
-/* 中断和异常处理 */
 void handle_interrupt(int irq)
 {
-    /* 处理硬件中断 */
-    printk("Interrupt %d received\n", irq);
-    
-    /* 根据中断号调用相应的处理程序 */
+    printk(" 一大波中断来袭 %d received\n", irq);
+
     switch (irq) {
-        case 0:  /* 时钟中断 */
+        case 0:
             timer_interrupt();
             break;
-        case 1:  /* 键盘中断 */
+        case 1:
             keyboard_interrupt();
             break;
         default:
@@ -558,101 +486,82 @@ void handle_interrupt(int irq)
 
 void handle_exception(int exception, unsigned long error_code)
 {
-    /* 处理CPU异常 */
+   /*抛报错逻辑要先写，不然真的调试不出来 */
     printk("Exception %d (error code: 0x%lx)\n", exception, error_code);
-    
+
     switch (exception) {
-        case 0:  /* 除零错误 */
+        case 0:
             printk("Division by zero\n");
             break;
-        case 6:  /* 无效指令 */
+        case 6:
             printk("Invalid instruction\n");
             break;
-        case 13: /* 一般保护错误 */
+        case 13:
             printk("General protection fault\n");
             break;
-        case 14: /* 页错误 */
+        case 14:
             handle_page_fault(error_code);
             break;
         default:
             printk("Unknown exception: %d\n", exception);
             break;
     }
-    
-    /* 如果是内核异常，触发panic */
-    if (exception != 14) {  /* 页错误可能是正常的 */
+
+    if (exception != 14) {
         panic("Unhandled exception in kernel");
     }
 }
 
-/* 时钟中断处理 */
 void timer_interrupt(void)
 {
-    /* 更新系统时间 */
     update_jiffies();
-    
-    /* 调度器时钟滴答 */
+
     scheduler_tick();
-    
-    /* 处理定时器 */
+
     run_timer_softirq();
 }
 
-/* 键盘中断处理 */
 void keyboard_interrupt(void)
 {
-    /* 读取键盘扫描码 */
     unsigned char scancode = inb(0x60);
-    
-    /* 处理键盘输入 */
+
     handle_keyboard_input(scancode);
 }
 
-/* 页错误处理 */
 void handle_page_fault(unsigned long error_code)
 {
     unsigned long address;
-    
-    /* 获取出错地址 */
+
     asm volatile("movq %%cr2, %0" : "=r" (address));
-    
-    printk("Page fault at address 0x%lx, error code: 0x%lx\n", 
+
+    printk("Page fault at address 0x%lx, error code: 0x%lx\n",
            address, error_code);
-    
-    /* 处理页错误 */
+
     do_page_fault(address, error_code);
 }
 
-/* 获取当前时间戳 */
 u64 get_jiffies_64(void)
 {
-    /* 简化实现，实际需要从硬件时钟读取 */
     static u64 jiffies = 0;
     return jiffies++;
 }
 
-/* 更新系统时间 */
 void update_jiffies(void)
 {
-    /* 简化实现，实际需要更复杂的时间管理 */
     static u64 jiffies = 0;
     jiffies++;
 }
 
-/* 获取当前CPU ID */
 u32 smp_processor_id(void)
 {
-    /* 简化实现，单CPU */
     return 0;
 }
 
-/* CPU放松指令 */
 void cpu_relax(void)
 {
     asm volatile("pause" ::: "memory");
 }
 
-/* 中断控制 */
 unsigned long local_irq_save(void)
 {
     unsigned long flags;
@@ -675,30 +584,20 @@ void local_irq_enable(void)
     asm volatile("sti" ::: "memory");
 }
 
-/* 底半部控制 */
-void local_bh_disable(void)
-{
-    /* TODO: 实现底半部禁用 */
-}
 
 void local_bh_enable(void)
 {
-    /* TODO: 实现底半部启用 */
 }
 
-/* 内存管理函数 */
 void *kmalloc(size_t size, gfp_t flags)
 {
-    /* TODO: 实现内核内存分配 */
     return NULL;
 }
 
 void kfree(void *ptr)
 {
-    /* TODO: 实现内核内存释放 */
 }
 
-/* 字符串函数 */
 int strcmp(const char *s1, const char *s2)
 {
     while (*s1 && *s2 && *s1 == *s2) {
@@ -741,7 +640,6 @@ void *memcpy(void *dest, const void *src, size_t n)
     return dest;
 }
 
-/* 内核启动完成，进入用户空间 */
 void start_kernel(void)
 {
     /* 这是内核的真正入口点 */
