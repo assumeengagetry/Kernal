@@ -342,19 +342,15 @@ struct task_struct *dup_task_struct(struct task_struct *orig)
     tsk->exit_state = 0;
     tsk->exit_code = 0;
 
-    /* 重新初始化链表节点 */
     INIT_LIST_HEAD(&tsk->tasks);
     INIT_LIST_HEAD(&tsk->children);
     INIT_LIST_HEAD(&tsk->sibling);
     RB_CLEAR_NODE(&tsk->run_node);
 
-    /* 重新初始化锁 */
     spin_lock_init(&tsk->alloc_lock);
 
-    /* 重新初始化等待队列 */
     init_waitqueue_head(&tsk->wait_chldexit);
 
-    /* 重新初始化统计信息 */
     tsk->utime = 0;
     tsk->stime = 0;
     tsk->gtime = 0;
@@ -366,26 +362,22 @@ struct task_struct *dup_task_struct(struct task_struct *orig)
     tsk->nvcsw = 0;
     tsk->nivcsw = 0;
 
-    /* 重新初始化调度实体 */
     tsk->se.exec_start = 0;
     tsk->se.sum_exec_runtime = 0;
     tsk->se.prev_sum_exec_runtime = 0;
     tsk->se.nr_migrations = 0;
 
-    /* 重新初始化引用计数 */
     atomic_set(&tsk->usage, 1);
 
     return tsk;
 }
 
-/* 将任务添加到调度器 */
 void sched_fork(struct task_struct *p)
 {
     ulong flags;
     int cpu = smp_processor_id();
     struct rq *rq = cpu_rq(cpu);
 
-    /* 初始化调度相关字段 */
     p->state = TASK_RUNNING;
     p->se.exec_start = 0;
     p->se.sum_exec_runtime = 0;
@@ -393,21 +385,17 @@ void sched_fork(struct task_struct *p)
     p->se.vruntime = 0;
     p->se.nr_migrations = 0;
 
-    /* 设置调度策略 */
     p->policy = SCHED_NORMAL;
     p->prio = current->normal_prio;
     p->static_prio = current->static_prio;
     p->normal_prio = current->normal_prio;
 
-    /* 设置负载权重 */
     p->se.load.weight = prio_to_weight[p->static_prio - MAX_RT_PRIO];
     p->se.load.inv_weight = 0;
 
-    /* 设置CPU亲和性 */
     p->cpus_allowed = current->cpus_allowed;
     p->nr_cpus_allowed = current->nr_cpus_allowed;
 
-    /* 如果是内核线程，继承父进程的活跃内存描述符 */
     if (unlikely(p->flags & PF_KTHREAD)) {
         p->mm = NULL;
         p->active_mm = current->active_mm;
@@ -415,46 +403,35 @@ void sched_fork(struct task_struct *p)
             atomic_inc(&p->active_mm->mm_count);
     }
 
-    /* 初始化调度统计 */
     memset(&p->sched_info, 0, sizeof(p->sched_info));
 
-    /* 设置最后使用的CPU */
     p->last_cpu = cpu;
     p->wake_cpu = cpu;
 
-    /* 初始化抢占计数 */
     p->preempt_count = FORK_PREEMPT_COUNT;
 
-    /* 添加到全局任务列表 */
     spin_lock_irqsave(&task_list_lock, flags);
     list_add_tail(&p->tasks, &task_list);
     spin_unlock_irqrestore(&task_list_lock, flags);
 }
 
-/* 唤醒新任务 */
 void wake_up_new_task(struct task_struct *p)
 {
     ulong flags;
     struct rq *rq;
     int cpu = smp_processor_id();
 
-    /* 设置任务状态为运行中 */
     p->state = TASK_RUNNING;
 
-    /* 获取运行队列 */
     rq = task_rq_lock(p, &flags);
 
-    /* 激活任务 */
     activate_task(rq, p, 0);
 
-    /* 检查是否需要抢占 */
     check_preempt_curr(rq, p, WF_FORK);
 
-    /* 释放运行队列锁 */
     task_rq_unlock(rq, p, &flags);
 }
 
-/* 激活任务 */
 void activate_task(struct rq *rq, struct task_struct *p, int flags)
 {
     if (task_contributes_to_load(p))
@@ -463,7 +440,6 @@ void activate_task(struct rq *rq, struct task_struct *p, int flags)
     enqueue_task(rq, p, flags);
 }
 
-/* 去激活任务 */
 void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
 {
     if (task_contributes_to_load(p))
@@ -472,7 +448,6 @@ void deactivate_task(struct rq *rq, struct task_struct *p, int flags)
     dequeue_task(rq, p, flags);
 }
 
-/* 将任务加入运行队列 */
 static void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
 {
     update_rq_clock(rq);
@@ -483,7 +458,6 @@ static void enqueue_task(struct rq *rq, struct task_struct *p, int flags)
     p->sched_class->enqueue_task(rq, p, flags);
 }
 
-/* 将任务从运行队列移除 */
 static void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
 {
     update_rq_clock(rq);
@@ -494,7 +468,6 @@ static void dequeue_task(struct rq *rq, struct task_struct *p, int flags)
     p->sched_class->dequeue_task(rq, p, flags);
 }
 
-/* 更新运行队列时钟 */
 static void update_rq_clock(struct rq *rq)
 {
     s64 delta;
@@ -507,7 +480,6 @@ static void update_rq_clock(struct rq *rq)
     update_rq_clock_task(rq, delta);
 }
 
-/* 更新运行队列任务时钟 */
 static void update_rq_clock_task(struct rq *rq, s64 delta)
 {
     s64 steal = 0, irq_delta = 0;
@@ -531,25 +503,21 @@ static void update_rq_clock_task(struct rq *rq, s64 delta)
     rq->clock_task += delta;
 }
 
-/* 获取运行队列 */
 struct rq *cpu_rq(int cpu)
 {
     return &runqueues[cpu];
 }
 
-/* 获取任务的运行队列 */
 static struct rq *task_rq(struct task_struct *p)
 {
     return cpu_rq(task_cpu(p));
 }
 
-/* 获取任务所在的CPU */
 static int task_cpu(struct task_struct *p)
 {
     return p->last_cpu;
 }
 
-/* 锁定任务的运行队列 */
 static struct rq *task_rq_lock(struct task_struct *p, ulong *flags)
 {
     struct rq *rq;
@@ -563,13 +531,11 @@ static struct rq *task_rq_lock(struct task_struct *p, ulong *flags)
     }
 }
 
-/* 解锁任务的运行队列 */
 static void task_rq_unlock(struct rq *rq, struct task_struct *p, ulong *flags)
 {
     spin_unlock_irqrestore(&rq->lock, *flags);
 }
 
-/* 主调度函数 */
 void schedule(void)
 {
     struct task_struct *prev, *next;
@@ -583,57 +549,46 @@ void schedule(void)
 
     local_irq_save(flags);
 
-    /* 锁定运行队列 */
     spin_lock(&rq->lock);
 
-    /* 更新时钟 */
     update_rq_clock(rq);
 
-    /* 选择下一个任务 */
     next = pick_next_task(rq, prev);
 
-    /* 清除需要重新调度的标志 */
     clear_tsk_need_resched(prev);
 
     if (likely(prev != next)) {
         rq->nr_switches++;
         rq->curr = next;
 
-        /* 进行上下文切换 */
         context_switch(rq, prev, next);
     } else {
-        /* 没有切换，只需要释放锁 */
         spin_unlock(&rq->lock);
     }
 
     local_irq_restore(flags);
 }
 
-/* 选择下一个任务 */
 struct task_struct *pick_next_task(struct rq *rq, struct task_struct *prev)
 {
     const struct sched_class *class;
     struct task_struct *p;
 
-    /* 如果没有任务在运行，返回空闲任务 */
     if (likely(rq->nr_running == rq->cfs.h_nr_running)) {
         p = pick_next_task_fair(rq, prev);
         if (likely(p))
             return p;
     }
 
-    /* 按优先级顺序检查各个调度类 */
     for_each_class(class) {
         p = class->pick_next_task(rq, prev);
         if (p)
             return p;
     }
 
-    /* 如果没有找到任务，返回空闲任务 */
     return rq->idle;
 }
 
-/* 上下文切换 */
 static void context_switch(struct rq *rq, struct task_struct *prev,
                           struct task_struct *next)
 {
@@ -647,22 +602,18 @@ static void context_switch(struct rq *rq, struct task_struct *prev,
     arch_start_context_switch(prev);
 
     if (!mm) {
-        /* 内核线程 */
         next->active_mm = oldmm;
         atomic_inc(&oldmm->mm_count);
         enter_lazy_tlb(oldmm, next);
     } else {
-        /* 用户进程 */
         switch_mm(oldmm, mm, next);
     }
 
     if (!prev->mm) {
-        /* 内核线程 */
         prev->active_mm = NULL;
         rq->prev_mm = oldmm;
     }
 
-    /* 切换寄存器状态和栈 */
     switch_to(prev, next, prev);
 
     barrier();
@@ -670,7 +621,6 @@ static void context_switch(struct rq *rq, struct task_struct *prev,
     finish_task_switch(prev);
 }
 
-/* 准备任务切换 */
 static void prepare_task_switch(struct rq *rq, struct task_struct *prev,
                                struct task_struct *next)
 {
@@ -681,7 +631,6 @@ static void prepare_task_switch(struct rq *rq, struct task_struct *prev,
     prepare_arch_switch(next);
 }
 
-/* 完成任务切换 */
 static void finish_task_switch(struct task_struct *prev)
 {
     struct rq *rq = this_rq();
@@ -701,21 +650,16 @@ static void finish_task_switch(struct task_struct *prev)
         mmdrop(mm);
 
     if (unlikely(prev_state == TASK_DEAD)) {
-        /*
-         * 移除退出的任务
-         */
         put_task_struct(prev);
     }
 }
 
-/* 让出CPU */
 void yield(void)
 {
     set_current_state(TASK_RUNNING);
     sys_sched_yield();
 }
 
-/* 系统调用：让出CPU */
 long sys_sched_yield(void)
 {
     struct rq *rq = this_rq_lock();
@@ -731,7 +675,6 @@ long sys_sched_yield(void)
     return 0;
 }
 
-/* 唤醒进程 */
 void wake_up_process(struct task_struct *p)
 {
     ulong flags;
@@ -746,11 +689,3 @@ void wake_up_process(struct task_struct *p)
 out:
     raw_spin_unlock_irqrestore(&p->pi_lock, flags);
 }
-
-/* 检查是否需要抢占当前任务 */
-void check_preempt_curr(struct rq *rq, struct task_struct *p, int flags)
-{
-    const struct sched_class *class;
-
-    if (p->sched_class == rq->curr->sched_class) {
-        r
