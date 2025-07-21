@@ -119,7 +119,7 @@ Kernal/
 # 检查工具链
 make check-tools
 
-# 构建内核
+# 构建内核(这边建议在debain系下构建)
 make all
 
 # 清理构建文件
