@@ -4,7 +4,7 @@
 #include "../../include/spinlock.h"
 #include "../../include/mm.h"
 
-/* CFS调度器常量 */
+
 #define SCHED_LATENCY_NS        (6 * 1000000ULL)  /* 6ms */
 #define SCHED_MIN_GRANULARITY_NS (750000ULL)      /* 0.75ms */
 #define SCHED_WAKEUP_GRANULARITY_NS (1000000ULL) /* 1ms */
