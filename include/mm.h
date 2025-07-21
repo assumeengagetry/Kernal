@@ -116,7 +116,6 @@
 #define ClearPageYoung(page)    clear_bit(PG_young, &(page)->flags)
 #define ClearPageIdle(page)     clear_bit(PG_idle, &(page)->flags)
 
-/* 内存区域类型 */
 enum zone_type {
     ZONE_DMA,           /* 直接内存访问区域 */
     ZONE_DMA32,         /* 32位DMA区域 */
@@ -127,7 +126,6 @@ enum zone_type {
     __MAX_NR_ZONES
 };
 
-/* 内存区域水位 */
 enum zone_watermarks {
     WMARK_MIN,          /* 最小水位 */
     WMARK_LOW,          /* 低水位 */
@@ -135,7 +133,6 @@ enum zone_watermarks {
     NR_WMARK
 };
 
-/* 页面迁移类型 */
 enum migratetype {
     MIGRATE_UNMOVABLE,  /* 不可移动 */
     MIGRATE_MOVABLE,    /* 可移动 */
@@ -147,7 +144,6 @@ enum migratetype {
     MIGRATE_TYPES
 };
 
-/* 页面分配标志 */
 #define __GFP_DMA           0x01u   /* 分配DMA内存 */
 #define __GFP_HIGHMEM       0x02u   /* 分配高端内存 */
 #define __GFP_DMA32         0x04u   /* 分配32位DMA内存 */
@@ -174,7 +170,6 @@ enum migratetype {
 #define __GFP_WRITE         0x800000u /* 分配器可以写 */
 #define __GFP_RECLAIM       (__GFP_DIRECT_RECLAIM | __GFP_KSWAPD_RECLAIM)
 
-/* 常用的GFP标志组合 */
 #define GFP_KERNEL          (__GFP_RECLAIM | __GFP_IO | __GFP_FS)
 #define GFP_ATOMIC          (__GFP_HIGH | __GFP_ATOMIC | __GFP_KSWAPD_RECLAIM)
 #define GFP_USER            (__GFP_RECLAIM | __GFP_IO | __GFP_FS | __GFP_HARDWALL)
@@ -188,7 +183,6 @@ enum migratetype {
 #define GFP_TRANSHUGE       ((GFP_HIGHUSER_MOVABLE | __GFP_COMP | __GFP_NOWARN) & ~__GFP_RECLAIM)
 #define GFP_TRANSHUGE_LIGHT (GFP_HIGHUSER_MOVABLE | __GFP_COMP | __GFP_NOWARN)
 
-/* 页面结构 */
 struct page {
     ulong flags;        /* 页面标志 */
 
@@ -236,26 +230,19 @@ struct page {
 
     struct mem_cgroup *mem_cgroup;  /* 内存控制组 */
 
-    /* 调试信息 */
     void *virtual;                  /* 虚拟地址 */
 
-    /* 锁和等待队列 */
     wait_queue_head_t *waiters;     /* 等待队列 */
 
-    /* 页面所属的内存区域 */
     struct zone *zone;              /* 内存区域 */
 
-    /* 页面所属的节点 */
     struct pglist_data *pgdat;      /* 节点数据 */
 };
 
-/* 页面偏移类型 */
 typedef ulong pgoff_t;
 
-/* 页面帧号 */
 typedef ulong pfn_t;
 
-/* 地址空间结构 */
 struct address_space {
     struct inode *host;             /* 宿主inode */
     struct radix_tree_root page_tree; /* 页面基数树 */
@@ -274,7 +261,6 @@ struct address_space {
     void *private_data;             /* 私有数据 */
 };
 
-/* 虚拟内存区域 */
 struct vm_area_struct {
     struct mm_struct *vm_mm;        /* 所属的内存描述符 */
     ulong vm_start;         /* 起始虚拟地址 */
@@ -308,7 +294,6 @@ struct vm_area_struct {
     struct vm_userfaultfd_ctx vm_userfaultfd_ctx; /* 用户故障上下文 */
 };
 
-/* VMA标志 */
 #define VM_READ         0x00000001  /* 可读 */
 #define VM_WRITE        0x00000002  /* 可写 */
 #define VM_EXEC         0x00000004  /* 可执行 */
@@ -340,12 +325,10 @@ struct vm_area_struct {
 #define VM_NOHUGEPAGE   0x40000000  /* 不使用大页面 */
 #define VM_MERGEABLE    0x80000000  /* KSM可合并 */
 
-/* 页面保护类型 */
 typedef struct {
     ulong pgprot;
 } pgprot_t;
 
-/* 内存区域结构 */
 struct zone {
     ulong watermark[NR_WMARK]; /* 水位标记 */
     ulong nr_reserved_highatomic; /* 高原子保留页面数 */
@@ -356,14 +339,12 @@ struct zone {
 
     spinlock_t lock;                /* 区域锁 */
 
-    /* 空闲页面统计 */
     ulong free_pages;       /* 空闲页面数 */
     ulong min_unmapped_pages; /* 最小未映射页面数 */
     ulong min_slab_pages;   /* 最小slab页面数 */
 
     struct free_area free_area[MAX_ORDER]; /* 空闲区域 */
 
-    /* 区域回收 */
     ulong pages_scanned;    /* 扫描的页面数 */
     spinlock_t lru_lock;           /* LRU锁 */
     struct lruvec lruvec;          /* LRU向量 */
@@ -379,11 +360,9 @@ struct zone {
 
     bool contiguous;               /* 连续内存 */
 
-    /* 统计信息 */
     atomic_long_t vm_stat[NR_VM_ZONE_STAT_ITEMS]; /* 虚拟内存统计 */
     atomic_long_t vm_numa_stat[NR_VM_NUMA_STAT_ITEMS]; /* NUMA统计 */
 
-    /* 区域信息 */
     ulong zone_start_pfn;   /* 区域起始pfn */
     ulong managed_pages;    /* 管理的页面数 */
     ulong spanned_pages;    /* 跨越的页面数 */
@@ -391,31 +370,24 @@ struct zone {
 
     const char *name;              /* 区域名称 */
 
-    /* 内存热插拔 */
     seqlock_t span_seqlock;        /* 跨越序列锁 */
 
-    /* 等待队列 */
     wait_queue_head_t *wait_table;  /* 等待表 */
     ulong wait_table_hash_nr_entries; /* 等待表哈希条目数 */
     ulong wait_table_bits;  /* 等待表位数 */
 
-    /* 页面回收 */
     struct pglist_data *zone_pgdat; /* 区域页面数据 */
 
-    /* 填充到缓存行边界 */
     char padding[ZONE_PADDING_SIZE];
 };
 
-/* 最大分配阶数 */
 #define MAX_ORDER 11
 
-/* 空闲区域结构 */
 struct free_area {
     struct list_head free_list[MIGRATE_TYPES]; /* 空闲链表 */
     ulong nr_free;          /* 空闲页面数 */
 };
 
-/* 每CPU页面集 */
 struct per_cpu_pages {
     int count;                      /* 页面数量 */
     int high;                       /* 高水位 */
@@ -423,14 +395,12 @@ struct per_cpu_pages {
     struct list_head lists[MIGRATE_PCPTYPES]; /* 页面链表 */
 };
 
-/* LRU向量 */
 struct lruvec {
     struct list_head lists[NR_LRU_LISTS]; /* LRU链表 */
     struct zone_reclaim_stat reclaim_stat; /* 回收统计 */
     struct mem_cgroup_per_zone *mem_cgroup_zone; /* 内存控制组区域 */
 };
 
-/* LRU链表类型 */
 enum lru_list {
     LRU_INACTIVE_ANON = LRU_BASE,   /* 不活跃匿名页面 */
     LRU_ACTIVE_ANON = LRU_BASE + LRU_ACTIVE, /* 活跃匿名页面 */
@@ -444,7 +414,6 @@ enum lru_list {
 #define LRU_ACTIVE 1
 #define LRU_FILE 2
 
-/* 内存节点数据 */
 struct pglist_data {
     struct zone node_zones[MAX_NR_ZONES]; /* 节点区域 */
     struct zonelist node_zonelists[MAX_ZONELISTS]; /* 区域列表 */
