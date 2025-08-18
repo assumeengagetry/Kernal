@@ -1,98 +1,140 @@
 # Linux 微内核操作系统
-
 这是一个基于微内核架构的操作系统实现，遵循Linux微内核核心文档的设计原则。
 
-## 核心设计原则
+# 总体设计原则（简要）
 
-**任何可以在用户空间安全运行的功能，都必须在用户空间运行。**
+* 内核只做最小信任/最核心工作（地址空间、线程、IPC、低级资源管理、异常/中断）。
+* 尽量把复杂逻辑放到用户态服务（文件系统、网络栈、驱动、策略）。
+* 代码分层清晰：`arch/`、`kernel/`、`lib/`、`user/`、`tools/`、`docs/`。
+* 强制接口契约（IPC/ABI），便于并行开发与语言互操作（C/Rust）。
+* 小步快跑：先做 QEMU 可启动的 minimal kernel，再逐步展开子系统。
 
-内核本身只提供最基础、最核心的服务，充当进程间安全通信和资源隔离的媒介。
-
-## 架构概述
-
-### 微内核核心职责
-
-- **进程隔离 (Process Isolation)**: 为每个进程提供独立的虚拟地址空间
-- **进程间通信 (IPC)**: 提供高效、安全的进程间通信机制
-- **基础线程管理**: 线程的创建、销毁和调度
-- **基础资源管理**: CPU时间、物理内存等核心资源的分配
-
-### 主要子系统
-
-1. **进程管理**
-   - 完全公平调度器 (CFS)
-   - 进程生命周期管理
-   - 上下文切换
-   - 多级反馈队列
-
-2. **内存管理**
-   - 伙伴系统 (Buddy System)
-   - 虚拟内存管理
-   - 页表管理
-   - 内存回收机制
-
-3. **虚拟文件系统 (VFS)**
-   - 统一的文件系统接口
-   - 多级缓存机制
-   - 目录项缓存
-
-4. **网络协议栈**
-   - 分层协议处理
-   - 套接字接口
-   - 数据包处理
-
-5. **设备驱动与模块**
-   - 用户态驱动支持
-   - 内核模块机制
-   - 设备抽象层
-
-## 目录结构
+# 推荐项目结构（示例）
 
 ```
-Kernal/
-├── arch/                   # 架构相关代码
-│   └── x86_64/            # x86_64架构支持
-│       ├── boot.S         # 引导代码
-│       ├── kernel.ld      # 链接脚本
-│       ├── interrupt.S    # 中断处理
-│       └── switch.S       # 上下文切换
-├── include/               # 头文件
-│   ├── types.h           # 基本类型定义
-│   ├── sched.h           # 调度器相关
-│   ├── mm.h              # 内存管理
-│   ├── list.h            # 链表操作
-│   └── spinlock.h        # 同步原语
-├── src/                  # 源代码
-│   ├── kernel/           # 内核核心
-│   │   ├── main.c        # 内核入口
-│   │   ├── sched.c       # 调度器
-│   │   └── sched_fair.c  # CFS调度器
-│   ├── mm/               # 内存管理
-│   │   └── buddy.c       # 伙伴系统
-│   ├── fs/               # 文件系统
-│   ├── net/              # 网络子系统
-│   ├── ipc/              # 进程间通信
-│   └── drivers/          # 设备驱动
-├── Makefile              # 构建脚本
-├── LICENSE               # 许可证
-└── README.md            # 本文件
+linux-microkernel/                 # 根仓库
+├── .github/
+│   ├── workflows/                 # CI (build/test/qemu)
+│   └── ISSUE_TEMPLATE.md
+├── arch/
+│   └── x86_64/
+│       ├── boot/                  # 启动、链接脚本、启动汇编
+│       ├── mm/                    # 架构相关页表 helper
+│       └── cpu/                   # cpu 特定代码
+├── kernel/
+│   ├── include/                   # 内核公共头 (kernel/*.h)
+│   ├── core/                      # microkernel core（scheduler, ipc core）
+│   │   ├── process/
+│   │   ├── thread/
+│   │   ├── sched/
+│   │   └── ipc/
+│   ├── mm/                        # 伙伴系统、虚拟内存抽象（不含arch）
+│   ├── interrupt/                 # 中断/异常框架
+│   ├── drivers/                   # 简单内核驱动骨架（打印、console）
+│   └── Kconfig / Makefile         # 内核构建接口
+├── lib/                           # 内核与用户态共用的轻量库 (rb-tree, lists)
+├── user/                          # 用户态服务与示例程序
+│   ├── services/
+│   │   ├── init/                  # 初始化进程（启动服务）
+│   │   ├── vfsd/                  # VFS 服务（用户态）
+│   │   ├── netd/                  # 网络服务（用户态）
+│   │   └── devd/                  # 用户态设备驱动（如 virtio）
+│   ├── apps/                      # 用户程序示例 (shell, hello)
+│   └── libs/                      # 用户库 (libc shim, ipc client)
+├── tools/                         # 构建/模拟/测试脚本 (qemu helpers)
+├── tests/                         # 单元、集成测试 (qemu-based)
+│   ├── kernel-unit/
+│   └── integration/
+├── docs/
+│   ├── design/                    # 设计文档 (IPC spec, ABI, sched)
+│   ├── dev-setup.md
+│   └── roadmap.md
+├── examples/                       # 最小系统镜像 / demo
+├── scripts/                        # 自动化脚本 (run-qemu, build-image)
+├── .clang-format
+├── Makefile                        # 顶层构建入口：make all/qemu/test/clean
+├── README.md
+├── CONTRIBUTING.md
+└── LICENSE
 ```
 
-## 特性
+# 每个目录的详细职责（精炼版）
 
-### 已实现
+* `arch/x86_64`: 启动代码、bootloader 接口、架构特定的页表/上下文切换实现、异常向量。
+* `kernel/core`: microkernel 最小内核（线程/调度/IPC/资源分配/内核同步）。
+* `kernel/mm`: 伙伴系统 / 内存分配器 / 虚拟内存管理的非架构部分。
+* `kernel/interrupt`: 中断向量注册、IRQ 管理、异常处理框架。
+* `kernel/drivers`: 只放能在内核低层运行且必须在内核态的驱动（例如 early console、低级中断控制）。其余放到 `user/services/devd`。
+* `lib`: 常用数据结构（双向链表、红黑树）与无需大型依赖的算法。
+* `user/services`: 将大功能拆成守护进程（VFS、网络、设备代理、权限管理），以实现「功能可以在用户空间安全运行」的原则。
+* `tests`: QEMU-based integration tests，单元测试可借助 `unity` 或 `cmocka` 对 kernel core 的用户态模拟接口做测试（注意：内核态代码需要 cross-build & qemu-run 才能真实验证）。
+* `docs/design`: 放 IPC 协议、消息格式、capability 模型、syscall ABI 文档（非常重要，接口一旦确定会影响大量代码）。
 
-- [x] 基础内核框架
-- [x] 多级页表虚拟内存管理
-- [x] 完全公平调度器 (CFS)
-- [x] 伙伴系统内存分配
-- [x] 进程管理和上下文切换
-- [x] 基础系统调用接口
-- [x] 双向链表和红黑树数据结构
+# 编译 / 构建建议（顶层 Makefile）
+
+* 顶层 `Makefile` 负责：
+
+  * 检查工具链（gcc/x86\_64-elf-gcc/nasm/qemu）
+  * `make kernel`、`make user`、`make image`、`make qemu`、`make test`
+* 建议单独的 `kernel/Makefile` 与 `user/Makefile`，支持交叉编译目标和 `DEBUG=1`。
+* 保持构建产物放在 `out/`，不污染源树。
+
+# IPC / ABI 设计建议（要写到 docs）
+
+* **基本思想**： capability + 基于消息的 IPC，结合共享内存映射（grant/portal）以支持高速数据通道（网络、文件缓存）。
+* **通道类型**：
+
+  * Control messages（固定小结构，可靠，不阻塞）
+  * Bulk shared memory（通过 grant/FD-like handle 映射页）
+* **消息格式（示例）**：
 
 
-### 计划实现
+* **同步模型**：
 
+  * 同步调用（RPC-like，阻塞等待回复）
+  * 异步通知（事件队列、epoll-like）
+* **安全性**：每个端点携带 capability/token，内核仅检查 capability 是否允许该操作（no implicit global rights）。
+
+# 用户态服务建议（语言 & 风格）
+
+* 推荐：**核心内核**用 **C (限定 subset)** + 必要汇编；**用户态服务**优先使用C，对现有 C 库和工具链友好。
+* 在 `user/libs/` 提供一个轻量 libc-shim（只实现必要 syscalls），方便用 C 编写服务。
+* 为了降低集成成本，先用 C 实现 `init` 与 `vfsd` 的最简版本，再逐步扩展。
+
+# 同步与锁（工程实践）
+
+* Kernel 内部只允许简单、可验证的 sync 原语：自旋锁、简洁的优先级提升/死锁检测。
+* 在 `kernel/core/sched` 添加 `CONFIG_TRACELOCK` 开关用于调试死锁路径。
+* 在 `user/` 服务里使用更高级别的 Rust 的 `Mutex`/`RwLock`。
+
+# 测试策略（必需）
+
+* 单元测试（可在宿主机 run 的纯 C 函数，放 `tests/kernel-unit`）。
+* 集成测试（QEMU 启动镜像并运行脚本，检查日志/退出码）。
+* 回归测试：在 CI 上运行 `make qemu-test`，对关键路径（fork, mmap, ipc, vfs ops）做黑盒验证。
+
+# CI（Github Actions）简要建议
+
+* Workflow 分为：`build-kernel`、`build-user`、`qemu-integration`（QEMU headless 使用 `--nographic`，比较日志）。
+* 缓存构建产物（ccache）。
+* 在 PR 时触发：编译 + 测试套件（快速 smoke tests）。
+
+# 文档与贡献（必备文件）
+
+* `docs/design/ipc.md`：IPC 协议、例子、错误码。
+* `docs/dev-setup.md`：交叉编译工具链安装、QEMU 启动说明、调试（gdbserver）。
+* `CONTRIBUTING.md`：分支策略、PR 模板、代码风格检查（clang-format）。
+* `CODE_OF_CONDUCT.md`：开源社区友好政策。
+* `README.md`：可执行的入门步骤（如何在 QEMU 上启动最小镜像）。
+
+
+- [ ] 基础内核框架
+- [ ] 多级页表虚拟内存管理
+- [ ] 完全公平调度器 (CFS)
+- [ ] 伙伴系统内存分配
+- [ ] 进程管理和上下文切换
+- [ ] 基础系统调用接口
+- [ ] 双向链表和红黑树数据结构
 - [ ] 完整的VFS实现
 - [ ] 网络协议栈
 - [ ] 进程间通信机制 (IPC)
@@ -104,14 +146,6 @@ Kernal/
 - [ ] 文件系统支持
 - [ ] 多处理器支持 (SMP)
 
-## 构建和运行
-
-### 依赖
-
-- GCC (支持x86_64)
-- NASM (汇编器)
-- Binutils (链接器等)
-- QEMU (用于测试)
 
 ### 构建
 
@@ -150,88 +184,6 @@ make stats
 make analyze
 ```
 
-## 系统调用
-
-当前支持的系统调用：
-
-- `getpid()` - 获取进程ID
-- `fork()` - 创建子进程
-- `exit()` - 退出进程
-- `wait4()` - 等待子进程
-- `sched_yield()` - 让出CPU
-- `brk()` - 调整堆大小
-- `mmap()` - 内存映射
-- `munmap()` - 解除内存映射
-- `sysinfo()` - 系统信息
-- `uname()` - 系统名称信息
-
-## 调度器
-
-### 完全公平调度器 (CFS)
-
-- 基于虚拟运行时间 (vruntime)
-- 使用红黑树维护就绪队列
-- 支持Nice值优先级调整(其实还没写完这个)
-- 负载平衡机制
-
-### 调度策略
-
-- `SCHED_NORMAL` - 普通进程
-- `SCHED_IDLE` - 空闲进程
-- `SCHED_BATCH` - 批处理进程
-
-## 内存管理
-
-### 伙伴系统
-
-- 支持最大11阶 (4MB) 连续内存分配
-- 自动内存碎片整理
-- 多种迁移类型支持
-- 每CPU页面缓存
-
-### 虚拟内存
-
-- 四级页表 (PML4, PDPT, PDT, PT)
-- 写时复制 (COW)
-- 内存映射文件
-- 交换空间支持
-
-## 同步机制
-
-### 自旋锁
-
-- 基本自旋锁
-- 读写锁
-- 中断安全版本
-- 死锁检测
-
-### 等待队列
-
-- 可中断等待
-- 不可中断等待
-- 超时等待
-
-## 开发指南
-
-### 编码规范
-
-- 使用GNU C99标准
-- 遵循Linux内核编码风格
-- 每个函数都要有注释
-- 使用有意义的变量名
-
-### 调试
-
-```bash
-# 生成反汇编
-make disasm
-
-# 生成符号表
-make symbols
-
-# 检查内核大小
-make size
-```
 
 ### 贡献
 
@@ -240,23 +192,6 @@ make size
 3. 提交更改
 4. 发送Pull Request
 
-## 性能特点
-
-- 微内核架构，核心功能精简
-- 高效的CFS调度器
-- 优化的内存管理
-- 最小化系统调用开销
-- 良好的缓存友好性
-
-## 限制和已知问题
-
-1. 当前只支持x86_64架构
-2. 单处理器支持（SMP正在开发）
-3. 有限的设备驱动支持
-4. 网络功能未完全实现
-5. 文件系统支持有限
-6. 自旋锁和读写锁写的很糟糕
-···
 
 ## 许可证
 
